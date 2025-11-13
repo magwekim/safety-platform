@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crime Hotspots Map - {{ station }}</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="/static/css/map.css">
+</head>
+<body>
+    <!-- Back Button -->
+    <a href="/police/dashboard" class="back-button">← Back to Dashboard</a>
+
+    <!-- Info Panel -->
+    <div class="info-panel">
+        <h3>🗺️ {{ station }} Hotspots</h3>
+
+        <div class="stat-box">
+            <h4>Total Hotspots</h4>
+            <p class="value">{{ hotspots|length }}</p>
+        </div>
+
+        <div class="legend">
+            <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #333;">Risk Levels</h4>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #d32f2f;"></div>
+                <span><strong>Critical:</strong> 10+ incidents</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f57c00;"></div>
+                <span><strong>High:</strong> 5-9 incidents</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #fbc02d;"></div>
+                <span><strong>Medium:</strong> 3-4 incidents</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #1976d2;"></div>
+                <span><strong>Low:</strong> 1-2 incidents</span>
+            </div>
+        </div>
+
+        <div class="pattern-analysis">
+            <h4>📊 Pattern Analysis</h4>
+            <ul id="patternList">
+                <!-- Will be populated by JavaScript -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Toggle Button -->
+    <div class="heatmap-toggle" onclick="toggleClusters()" id="toggleBtn">
+        🔥 Toggle Clusters
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Map Container -->
+    <div id="map" data-center-lat="{{ center_lat }}" data-center-lon="{{ center_lon }}"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script>
+        // Get data from backend
+        const hotspotsData = {{ hotspots_json | safe }};
+    </script>
+    <script src="/static/js/map.js"></script>
+    <script>
+        // Initialize map with data
+        document.addEventListener('DOMContentLoaded', function() {
+            const mapContainer = document.getElementById('map');
+            const centerLat = parseFloat(mapContainer.dataset.centerLat || -0.3031);
+            const centerLon = parseFloat(mapContainer.dataset.centerLon || 36.0800);
+
+            if (typeof initializeMap === 'function' && hotspotsData) {
+                initializeMap(centerLat, centerLon, hotspotsData);
+            }
+        });
+    </script>
+</body>
+</html>

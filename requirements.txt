@@ -1,0 +1,11 @@
+﻿setuptools>=70.0.0
+wheel
+Flask==2.3.3
+pymongo==4.6.3
+bleach==6.1.0
+Werkzeug==2.3.7
+googletrans==4.0.0-rc1
+deep-translator==1.11.4
+python-dotenv==1.0.1
+reportlab==4.0.7
+numpy>=1.26.4

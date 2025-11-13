@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Police Dashboard - {{ station }}</title>
+    <link rel="stylesheet" href="/static/css/police_dashboard.css">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>Police Dashboard</h1>
+        <div class="station-info">{{ station }} Police Station</div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <div>
+            <a href="#reports">📋 Reports</a>
+            <a href="#hotspots">🗺️ Hotspots</a>
+            <a href="/police/map" target="_blank">🌍 Map View</a>
+        </div>
+        <a href="/police/logout" class="logout">Logout</a>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Statistics Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Reports</h3>
+                <div class="value">{{ stats.total_reports }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pending</h3>
+                <div class="value">{{ stats.pending_reports }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Resolved</h3>
+                <div class="value">{{ stats.resolved_reports }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Recent (24h)</h3>
+                <div class="value">{{ stats.recent_reports }}</div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="section" id="reports">
+            <h2>📋 Recent Reports</h2>
+            {% if reports %}
+            <table id="reportsTable">
+                <thead>
+                    <tr>
+                        <th>Report ID</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Language</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td><span class="report-id">#{{ report.short_id }}</span></td>
+                        <td>{{ report.category }}</td>
+                        <td>{{ report.manual_location }}</td>
+                        <td>
+                            <span class="lang-badge {{ 'en' if report.language == 'English' else 'sw' }}">
+                                {{ report.language[:2].upper() }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ report.status }}">{{ report.status.title() }}</span>
+                        </td>
+                        <td>{{ report.created_at.strftime('%b %d, %H:%M') if report.created_at else 'N/A' }}</td>
+                        <td>
+                            <button class="btn btn-small"
+                                    data-id="{{ report.id }}"
+                                    data-short="{{ report.short_id }}"
+                                    data-category="{{ report.category }}"
+                                    data-description="{{ report.description }}"
+                                    data-location="{{ report.manual_location }}"
+                                    data-language="{{ report.language }}"
+                                    data-spam-score="{{ report.spam_score or 0 }}"
+                                    data-media-path="{{ report.media_path or '' }}"
+                                    onclick="openManageModal(this)">
+                                🔍 Manage
+                            </button>
+                            <a href="/police/download_report/{{ report._id }}"
+                               class="btn btn-small btn-download" target="_blank">📥 PDF</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <p>No reports available for this station</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Hotspots Section -->
+        <div class="section" id="hotspots">
+            <h2>🗺️ Crime Hotspots</h2>
+            {% if hotspots %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Location</th>
+                        <th>Incidents</th>
+                        <th>Last Incident</th>
+                        <th>Coordinates</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hotspot in hotspots %}
+                    <tr>
+                        <td>{{ hotspot.location }}</td>
+                        <td>
+                            <strong>{{ hotspot.incident_count }}</strong>
+                            <span class="badge badge-{{ 'high' if hotspot.incident_count >= 10 else 'medium' if hotspot.incident_count >= 5 else 'low' }}">
+                                {{ 'Critical' if hotspot.incident_count >= 10 else 'High' if hotspot.incident_count >= 5 else 'Medium' }}
+                            </span>
+                        </td>
+                        <td>{{ hotspot.last_incident.strftime('%b %d') if hotspot.last_incident else 'N/A' }}</td>
+                        <td>{{ "%.4f, %.4f"|format(hotspot.lat, hotspot.lon) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <p>No hotspots identified yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Manage Report Modal -->
+    <div class="modal" id="manageModal">
+        <div class="modal-content">
+            <h3>📋 Report #<span id="manageReportId"></span></h3>
+
+            <div style="background:#f8f9fa;padding:18px;border-radius:12px;margin-bottom:24px;">
+                <p><strong>Category:</strong> <span id="manageCategory"></span></p>
+                <p><strong>Location:</strong> <span id="manageLocation"></span></p>
+                <p>
+                    <strong>Detected Language:</strong>
+                    <span id="manageLanguage"></span>
+                    <span id="manageLangIndicator" class="lang-badge" style="margin-left:8px;padding:4px 8px;border-radius:4px;font-size:11px;"></span>
+                </p>
+                <p id="spamWarning" style="display:none;color:#d32f2f;font-weight:600;margin-top:8px;">
+                    ⚠ This report may be spam (score: <span id="spamScore"></span>)
+                </p>
+                <hr style="margin:16px 0;border:none;border-top:1px dashed #ddd;">
+                <p><strong>Original Description:</strong></p>
+                <div id="manageDescription" style="background:white;padding:14px;border-radius:8px;white-space:pre-wrap;"></div>
+
+                <!-- Media Section -->
+                <div id="mediaSection" style="margin-top:16px;display:none;">
+                    <hr style="margin:16px 0;">
+                    <p><strong>Attached Media:</strong></p>
+                    <div id="mediaPreview" style="text-align:center;"></div>
+                </div>
+
+                <!-- Translation Buttons -->
+                <div class="translation-buttons">
+                    <button id="translateEnBtn" class="btn btn-small btn-translate" onclick="translateReport('en')">
+                        🇬🇧 Translate to English
+                    </button>
+                    <button id="translateSwBtn" class="btn btn-small btn-translate-sw" onclick="translateReport('sw')">
+                        🇰🇪 Translate to Kiswahili
+                    </button>
+                </div>
+
+                <!-- Translation Panels -->
+                <div class="translation-panel" id="translationPanelEn" style="display:none;">
+                    <h4>🇬🇧 English Translation</h4>
+                    <div id="translatedContentEn" style="background:white;padding:12px;border-radius:8px;margin-top:10px;"></div>
+                </div>
+
+                <div class="translation-panel sw-panel" id="translationPanelSw" style="display:none;">
+                    <h4>🇰🇪 Kiswahili Translation</h4>
+                    <div id="translatedContentSw" style="background:white;padding:12px;border-radius:8px;margin-top:10px;"></div>
+                </div>
+            </div>
+
+            <!-- Response Form -->
+            <form method="POST" id="responseForm">
+                <div class="form-group">
+                    <label>Officer Name *</label>
+                    <input type="text" name="officer_name" required placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label>Action Taken *</label>
+                    <textarea name="action_taken" required placeholder="Describe the action taken..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Additional Notes</label>
+                    <textarea name="notes" placeholder="Optional notes..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Status *</label>
+                    <select name="status" required>
+                        <option value="investigating">Investigating</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <div class="action-buttons">
+                    <button type="submit" class="btn">✓ Submit Response</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeManageModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/police_dashboard.js"></script>
+</body>
+</html>

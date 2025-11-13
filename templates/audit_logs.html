@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs - Nakuru County</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1 class="mb-0">Audit Logs</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">System Audit Logs</h5>
+                <div>
+                    <a href="/admin/audit_logs" class="btn btn-sm btn-primary filter-btn">All</a>
+                    <a href="/admin/audit_logs?user_type=admin" class="btn btn-sm btn-outline-primary filter-btn">Admin</a>
+                    <a href="/admin/audit_logs?user_type=police" class="btn btn-sm btn-outline-primary filter-btn">Police</a>
+                    <a href="/admin/audit_logs?user_type=citizen" class="btn btn-sm btn-outline-primary filter-btn">Citizen</a>
+                    <a href="/admin/dashboard" class="btn btn-sm btn-secondary">Back to Dashboard</a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>User Type</th>
+                                <th>Username</th>
+                                <th>Action</th>
+                                <th>Details</th>
+                                <th>IP Address</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td><span class="badge bg-danger">ADMIN</span></td>
+                                <td>admin</td>
+                                <td>Login</td>
+                                <td>Successful login</td>
+                                <td>192.168.1.100</td>
+                                <td>2025-01-15 10:30:45</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><span class="badge bg-primary">POLICE</span></td>
+                                <td>nakurueast_pd</td>
+                                <td>Update Report</td>
+                                <td>Report #RPT-2025-001 marked as investigating</td>
+                                <td>192.168.1.105</td>
+                                <td>2025-01-15 09:15:22</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><span class="badge bg-secondary">CITIZEN</span></td>
+                                <td>Anonymous</td>
+                                <td>Submit Report</td>
+                                <td>New report #RPT-2025-045 submitted</td>
+                                <td>41.80.115.23</td>
+                                <td>2025-01-15 08:42:10</td>
+                            </tr>
+                            <!-- More logs would be dynamically generated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Note:</strong> Logs are kept for audit and compliance purposes. Showing last 100 entries.
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
