@@ -3,12 +3,41 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import logging
 import os
+import urllib.parse
 
 logger = logging.getLogger(__name__)
 
-# Database Connection
-MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://127.0.0.1:27017/')
-client = MongoClient(MONGO_URI)
+#  MongoDB Connection with proper SSL/TLS handling
+MONGO_URI = os.environ.get('MONGO_URI')
+
+# If MONGO_URI is not set, use local MongoDB
+if not MONGO_URI:
+    MONGO_URI = 'mongodb://127.0.0.1:27017/'
+    logger.warning("Using local MongoDB. Set MONGO_URI environment variable for production.")
+
+try:
+    # CRITICAL FIX: Add SSL/TLS parameters for MongoDB Atlas
+    client = MongoClient(
+        MONGO_URI,
+        tls=True,  # Enable TLS
+        tlsAllowInvalidCertificates=False,  # Validate certificates
+        serverSelectionTimeoutMS=30000,  # 30 second timeout
+        connectTimeoutMS=20000,
+        socketTimeoutMS=20000,
+        retryWrites=True,
+        w='majority'
+    )
+    
+    # Test the connection
+    client.admin.command('ping')
+    logger.info("✓ MongoDB connection successful")
+    
+except Exception as e:
+    logger.error(f"✗ MongoDB connection failed: {e}")
+    # Fallback to local MongoDB if Atlas connection fails
+    logger.warning("⚠️ Falling back to local MongoDB")
+    client = MongoClient('mongodb://127.0.0.1:27017/')
+
 db = client['safety_app']
 
 # Collections
