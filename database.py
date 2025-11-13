@@ -4,26 +4,25 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import logging
 import os
 import urllib.parse
+import certifi
 
 logger = logging.getLogger(__name__)
 
-#  MongoDB Connection with proper SSL/TLS handling
+# MongoDB Connection with proper SSL/TLS handling for Render + MongoDB Atlas
 MONGO_URI = os.environ.get('MONGO_URI')
 
-# If MONGO_URI is not set, use local MongoDB
 if not MONGO_URI:
     MONGO_URI = 'mongodb://127.0.0.1:27017/'
-    logger.warning("Using local MongoDB. Set MONGO_URI environment variable for production.")
+    logger.warning("⚠️ Using local MongoDB. Set MONGO_URI environment variable for production.")
 
 try:
-    # CRITICAL FIX: Add SSL/TLS parameters for MongoDB Atlas
+    # CRITICAL: Use certifi for SSL certificate verification on Render
     client = MongoClient(
         MONGO_URI,
-        tls=True,  # Enable TLS
-        tlsAllowInvalidCertificates=False,  # Validate certificates
-        serverSelectionTimeoutMS=30000,  # 30 second timeout
-        connectTimeoutMS=20000,
-        socketTimeoutMS=20000,
+        tlsCAFile=certifi.where(),  # This is the key fix!
+        serverSelectionTimeoutMS=5000,  # Reduced timeout
+        connectTimeoutMS=10000,
+        socketTimeoutMS=10000,
         retryWrites=True,
         w='majority'
     )
@@ -34,6 +33,7 @@ try:
     
 except Exception as e:
     logger.error(f"✗ MongoDB connection failed: {e}")
+    raise 
     # Fallback to local MongoDB if Atlas connection fails
     logger.warning("⚠️ Falling back to local MongoDB")
     client = MongoClient('mongodb://127.0.0.1:27017/')
