@@ -4,8 +4,12 @@ Flask==2.3.3
 pymongo==4.6.3
 bleach==6.1.0
 Werkzeug==2.3.7
-googletrans==4.0.0-rc1
+googletrans==4.0.0rc1
 deep-translator==1.11.4
 python-dotenv==1.0.1
 reportlab==4.0.7
 numpy>=1.26.4
+gunicorn==21.2.0
+scipy>=1.11.0
+certifi==2025.11.12
+Pillow>=10.0.0
