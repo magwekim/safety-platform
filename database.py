@@ -3,12 +3,41 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import logging
 import os
+import urllib.parse
+import certifi
 
 logger = logging.getLogger(__name__)
 
-# Database Connection
-MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://127.0.0.1:27017/')
-client = MongoClient(MONGO_URI)
+# MongoDB Connection with proper SSL/TLS handling for Render + MongoDB Atlas
+MONGO_URI = os.environ.get('MONGO_URI')
+
+if not MONGO_URI:
+    MONGO_URI = 'mongodb://127.0.0.1:27017/'
+    logger.warning("⚠️ Using local MongoDB. Set MONGO_URI environment variable for production.")
+
+try:
+    # CRITICAL: Use certifi for SSL certificate verification on Render
+    client = MongoClient(
+        MONGO_URI,
+        tlsCAFile=certifi.where(),  # This is the key fix!
+        serverSelectionTimeoutMS=5000,  # Reduced timeout
+        connectTimeoutMS=10000,
+        socketTimeoutMS=10000,
+        retryWrites=True,
+        w='majority'
+    )
+    
+    # Test the connection
+    client.admin.command('ping')
+    logger.info("✓ MongoDB connection successful")
+    
+except Exception as e:
+    logger.error(f"✗ MongoDB connection failed: {e}")
+    raise 
+    # Fallback to local MongoDB if Atlas connection fails
+    logger.warning("⚠️ Falling back to local MongoDB")
+    client = MongoClient('mongodb://127.0.0.1:27017/')
+
 db = client['safety_app']
 
 # Collections
